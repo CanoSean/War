@@ -1,0 +1,84 @@
+﻿@using Microsoft.AspNetCore.Identity
+@using War.Areas.Identity.Data
+@*@model IEnumerable<Player>*@
+@inject SignInManager<WarUser> SignInManager
+@inject UserManager<WarUser> UserManager
+@{
+    ViewData["Title"] = "GameGrid";
+}
+
+<h1 class="text-secondary display-1 p-2">GameGrid</h1>
+
+        @if (SignInManager.IsSignedIn(User))
+        {
+            <a class="btn btn-primary p-3" asp-area="" asp-controller="Player" asp-action="Game">Play New Game</a>
+        }
+@if (SignInManager.IsSignedIn(User))
+{
+<table class="table table-border table-striped" id="dataHistory" style="width:100%">
+    <thead>
+        <tr>
+            <th>
+                Player Name
+            </th>
+            <th>
+                Wins 
+            </th>
+            <th>
+                Loses
+            </th>
+            <th>
+                Number of move
+            </th>
+            <th>
+                Enemy
+            </th>
+        </tr>
+    </thead>
+
+             <tbody>
+            <tr>
+                <td class="borderless" colspan="4"></td>
+            </tr>
+            </tbody>
+        
+        @section Scripts{
+        <script>
+            try{
+                var name = '@UserManager.GetUserAsync(User).Result.IGN'
+                  $.ajax({
+                        type: "POST",
+                        url: "@Url.Action("GameHistory")",
+                        data: {player: name},
+                        success: function(response) {
+                        if(response.length == 0){
+                            var newdata = '<td colspan="5"><h3>There is no recorded Games Yet!</h3></td>'
+                            $('#dataHistory tbody').append(newdata)
+                        }
+                        for(var i = 0; i < response.length; i++){
+                            var newdata = '<tr><td>'+response[i].username+'</td><td>'+response[i].wins+'</td><td>'+response[i].loses+'</td><td>'+response[i].numberOfMove+'</td><td>'+response[i].enemy+'</td></tr>';
+                            console.log(newdata)
+                            $('#dataHistory tbody').append(newdata)
+                        }
+                        $('#dataHistory tbody').append('<tr><td class="borderless" colspan="4"></td></tr>')
+                        },
+                        error: function(req, status, error) {
+                     console.log(status)
+                    }
+                  })
+            }catch(err){
+                alert("Log in first!")
+            }
+            
+
+
+        </script>
+    }
+    
+</table>
+}
+else{
+<h4>No user is currently <a class="text-success"  asp-area="Identity" asp-page="/Account/Login">Login</a></h4>
+<h5>No account yet? <a class="text-danger" asp-area="Identity" asp-page="/Account/Register">Register</a></h5>
+}
+

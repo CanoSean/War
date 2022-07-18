@@ -1,0 +1,204 @@
+﻿@{
+    ViewData["Title"] = "Game";
+}
+<h1 class="text-center"1>@ViewData["Title"]</h1>
+
+<div class="text-center">
+    <table class="table table-border table-striped" style="width:100%">
+        <thead>
+            <tr>
+                <th>
+                    Player's Card
+                </th>
+                <th>
+                    Player Move
+                </th>
+                <th>
+                    AI Move
+                </th>
+                <th>
+                    AI's Card
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+            
+                <tr>
+                    <td id='decks'>
+                        <img id="holderhand" src="/img/red_joker.png"/>
+                        <button id="test" ><img id="playerHand" src="/img/red_joker.png"></img></button>
+                        <p id="playerScore"></p>
+                    </td>
+                    <td id="playerTable">
+                        <img id="playerMove" src="/img/red_joker.png" style="padding-top: 10px;"></img>
+                        <p id="pwin"></p>
+                    </td>
+                    <td id="aiTable">
+                        <img id="aiMove" src="/img/red_joker.png" style="padding-top: 10px;"></img>
+                        <p id="awin"></p>
+                    </td>
+                    <td id='decks'>
+                        <img id="holderhand" src="/img/red_joker.png"/>
+                        <img id="aiHand" src="/img/red_joker.png" style="padding-top: 10px;"></img><br/>
+                        <p id="aiScore"></p>
+                    </td>
+                </tr>
+            
+        </tbody>
+    </table>
+    @section Scripts{
+        <script>
+        $(document).ready(function() {
+        var x = 0;
+        var y = 0;
+        var p1hand;
+        var p2hand;
+        var p1play;
+        var p2play;
+        let pwar = [];
+        var sp;
+        var sa;
+        var once = 1;
+            
+            $.ajax({
+                type: 'GET',
+                url: '@Url.Action("GetPlayerCards")',
+                dataType: "json",
+                success: function(data){
+                    //$.each(data.value, function (i, d){
+                    //    var image = new Image();
+                    //    image.src = '/img/'+data.value[i].rank+"_of_"+data.value[i].suit+"s.png"
+                    //    $('#cards').append(image)
+                    //})
+                    console.log(data.value.slice(0,26))
+                    console.log(data.value.slice(26,52))
+
+                    if (once = 1) {                    
+                        p1hand = data.value.slice(0,26)
+                        p2hand = data.value.slice(26,52) 
+                        once++;
+                    }
+                    sp = p1hand.length;
+                    sa = p2hand.length;
+                    $('#playerScore').html(sp)
+                    $('#aiScore').html(sa)
+                    $('#playerHand').attr('src', '/img/'+p1hand[x].rank+"_of_"+p1hand[x].suit+"s.png")
+                    $('#aiHand').attr('src', '/img/'+p2hand[y].rank+"_of_"+p2hand[y].suit+"s.png")
+                },
+                error: function(req, status, error){
+                    console.log(error)
+                }
+            })
+            $('#test').click(function() {
+
+                $.ajax({
+                success: function(data){
+
+                    //$.each(data.value, function (i, d){
+                    //    var image = new Image();
+                    //    image.src = '/img/'+data.value[i].rank+"_of_"+data.value[i].suit+"s.png"
+                    //    $('#cards').append(image)
+                    //})
+                    //console.log(p1hand)
+                    //$('#cardplayerMoveattr('src', '/img/'+data.value[i++].rank+"_of_"+data.value[i++].suit+"s.png")
+                                    p1play = p1hand[x];
+                                    p2play = p2hand[y];
+                                    if (x >= p1hand.length - 1) {
+                                        x = 0;
+                                        //console.log("error side",p1hand, x , $.fn.shuffleArray(p1hand))
+                                        //p1hand = $.fn.shuffleArray(p1hand);
+                                        alert("Player Deck Shuffling")
+                                        console.log('test!',p1hand.sort(() => Math.random() - 0.5))
+                                        console.log("p1 shuffle" , x)
+                                        $('#playerHand').attr('src', '/img/'+p1hand[x].rank+"_of_"+p1hand[x].suit+"s.png")
+                                    } else if (y >= p2hand.length - 1){
+                                        y = 0;
+                                        //console.log("error side",p2hand, x , $.fn.shuffleArray(p2hand))
+                                        //p2hand = $.fn.shuffleArray(p2hand);
+                                        alert("AI Deck Shuffling")
+                                        console.log('test!',p2hand.sort(() => Math.random() - 0.5))
+                                        console.log("p2 shuffle", y)
+                                        $('#aiHand').attr('src', '/img/'+p2hand[y].rank+"_of_"+p2hand[y].suit+"s.png")
+                                    }
+                        try{ 
+                                                               // $("#playerbot").animate({left:'325px'}).fadeOut().animate({left:'0'}).fadeIn();
+                                    //$("#aiHand").animate({right:'325px'}).fadeOut().animate({right:'0'}).fadeIn();
+                                    
+                                $('#playerMove').attr('src', '/img/'+p1play.rank+"_of_"+p1play.suit+"s.png")
+                                x++;
+                                $('#playerHand').attr('src', '/img/'+p1hand[x].rank+"_of_"+p1hand[x].suit+"s.png")
+                                $('#aiMove').attr('src', '/img/'+p2play.rank+"_of_"+p2play.suit+"s.png")
+                                y++;
+                                $('#aiHand').attr('src', '/img/'+p2hand[y].rank+"_of_"+p2hand[y].suit+"s.png")
+                                console.log(p1play , p2play)
+                                console.log(p1hand , p2hand)
+                                    if (p1play.value > p2play.value) {
+                                        p1hand.push(p2hand[y - 1]);
+                                        if (pwar.length > 1) {
+                                            for (var i = 0; i < pwar.length; i++) {
+                                                p1hand.push(pwar[i]);
+                                            }
+                                            pwar = [];
+                                        }
+                                        p2hand.splice(y - 1, 1);
+                                        //p2play--;
+                                        y--;
+                                        $('#pwin').html("Win!")
+                                        $('#awin').html("Lose!")
+                                         $('#holder').remove();
+                                        console.log("Player Added")
+                                        pwar = [];
+                                    } else if (p1play.value < p2play.value) {
+                                        p2hand.push(p1hand[x - 1]);
+                                        if (pwar.length > 1) { 
+                                            for(var i = 0; i < pwar.length; i++){
+                                                p2hand.push(pwar[i]);
+                                            }
+                                            pwar = [];
+                                        }
+                                        p1hand.splice(x - 1, 1);
+                                        //p1play--;
+                                        x--;
+                                        $('#awin').html("Win!")
+                                        $('#pwin').html("Lose!")
+                                        console.log("Ai Added")
+                                         $('#holder').remove();
+                                        
+                                    } else if(p1play.value = p2play.value){
+                                        console.log("War time!" , p1play , p2play)
+                                            pwar.push(p1play);
+                                            p1hand.splice(x - 1, 1);
+                                            pwar.push(p2play);
+                                            p2hand.splice(y - 1, 1);
+                                        for(var i = 0; i < 3; i++){
+                                            pwar.push(p1hand[x++]);
+                                            p2hand.splice(y - 1, 1);
+                                            pwar.push(p2hand[y++])
+                                            p1hand.splice(x - 1, 1); 
+                                        }
+                                        console.log(pwar)
+                                        $('#playerTable').prepend('<img id="holder" src="/img/red_joker.png"/>')
+                                        $('#aiTable').prepend('<img id="holder" src="/img/red_joker.png"/>')
+                                        $('#awin').html("War!")
+                                        $('#pwin').html("War!")
+                                    }
+                                    sp = p1hand.length;
+                                    sa = p2hand.length;
+                                    $('#playerScore').html(sp)
+                                    $('#aiScore').html(sa)
+                            }catch (err) {
+                                console.log(err)
+                            }
+
+                },
+                error: function(req, status, error){
+                    console.log(error)
+                }
+            }) })
+            
+        })
+    </script>
+    }
+    
+
+</div>

@@ -1,0 +1,326 @@
+﻿@using Microsoft.AspNetCore.Identity
+@using War.Areas.Identity.Data
+@*@model IEnumerable<Player>*@
+@inject SignInManager<WarUser> SignInManager
+@inject UserManager<WarUser> UserManager
+@{
+    ViewData["Title"] = "Game";
+}
+<h1 class="text-center text-primary display-1 p-4"1>@ViewData["Title"]</h1>
+
+<div id="back" class="text-center" >
+    <table class="table table-border table-striped" style="width:100%">
+        <thead>
+            <tr>
+                <th>
+                    Player's Card
+                </th>
+                <th>
+                    Player Move
+                </th>
+                <th>
+                    AI Move
+                </th>
+                <th id='enemy'>
+                    AI's Card
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+                    <tr>
+                        <td class="borderless" colspan="4"></td>
+                    </tr>
+                <tr>
+                    <div style="visiblity: hidden;" id="dialog">
+                    </div>
+                    <td id='decks'>
+                        <img id="holderhand" src="/img/red_joker.png"/>
+                        <img id="playerbot" src="/img/red_joker.png" style="padding-top: 10px; position: relative;"></img>
+                        <p id="playerScore"></p>
+                    </td>
+                    <td id="playerTable">
+                        <img id="playerMove" src="/img/red_joker.png" style="padding-top: 10px;"></img>
+                        <p id="pwin"></p>
+                    </td>
+                    <td id="aiTable">
+                        <img id="aiMove" src="/img/red_joker.png" style="padding-top: 10px;"></img>
+                        <p id="awin"></p>
+                    </td>
+                    <td id='decks'>
+                        <img id="holderhand" src="/img/red_joker.png"/>
+                        <img id="aiHand" src="/img/red_joker.png" style="padding-top: 10px; position: relative;"></img><br/>
+                        <p id="aiScore"></p>
+                    </td>
+                </tr>
+            
+        </tbody>
+    </table>
+    @section Scripts{
+        <script>
+
+        const clicksound = new Audio();
+        clicksound.src ="/sounds/card.mp3"
+        const war = new Audio();
+        war.src ="/sounds/war.mp3"
+        const shuffle = new Audio();
+        shuffle.src ="/sounds/shuffle.mp3"
+        const give = new Audio();
+        give.src ="/sounds/give.mp3"
+        const win = new Audio();
+        win.src ="/sounds/win.mp3"
+        const lose = new Audio();
+        lose.src ="/sounds/lose.mp3"
+        $(document).ready(function() {
+        var x;
+        var y;
+        var p1hand;
+        var p2hand;
+        var p1play;
+        var p2play;
+        let pwar = [];
+        var sp;
+        var sa;
+        var once = 1;
+        var winnable = new Object();
+        var ign = '@UserManager.GetUserAsync(User).Result.IGN.ToString()';
+            
+            $.ajax({
+                type: 'GET',
+                url: '@Url.Action("GetPlayerCards")',
+                dataType: "json",
+                success: function(data){
+                    console.log(data.value.slice(0,26))
+                    console.log(data.value.slice(26,52))
+
+                    if (once = 1) {                    
+                        p1hand = data.value.slice(0,26)
+                        p2hand = data.value.slice(26,52) 
+                        once++;
+                    }
+                    sp = p1hand.length;
+                    sa = p2hand.length;
+                    x = p1hand.length;
+                    y = p2hand.length;
+                    $('#playerScore').html(sp)
+                    $('#aiScore').html(sa)
+                    $('#playerbot').attr('src', '/img/'+p1hand[0].rank+"_of_"+p1hand[0].suit+"s.png")
+                    //$('#aiHand').attr('src', '/img/'+p2hand[0].rank+"_of_"+p2hand[0].suit+"s.png")
+                    give.play();
+                },
+                error: function(req, status, error){
+                    console.log(error)
+                }
+            })
+            $('#playerbot').click(function() {
+
+                $.ajax({
+                success: function(data){
+                    clicksound.play();
+
+
+                        once++;
+                                    $("#playerbot").animate({left:'325px'}).fadeOut().animate({left:'0'}).fadeIn();
+                                    $("#aiHand").animate({right:'325px'}).fadeOut().animate({right:'0'}).fadeIn();
+                                    
+                                    p1play = p1hand[0];
+                                    p2play = p2hand[0];
+                                    p2hand.splice(0, 1);
+                                    p1hand.splice(0, 1);
+
+
+                                    if(p1hand.length == 0 || p2hand.length == 0){
+                                        if (p1hand.length == 0) {
+                                            winnable.Wins = 0;
+                                            winnable.Loses = 1;
+                                            winnable.Username = ign;
+                                            winnable.Gameplayed = 1;
+                                            winnable.Password = 'test';
+                                            winnable.NumberOfMove = once;
+                                            winnable.Enemy = 'Ai';
+                                            lose.play();
+                                            $.ajax({
+                                                type: "POST",
+                                                url: "@Url.Action("Record")",
+                                                data: winnable,
+                                                success: function(response) {
+                                                    console.log("sucess")
+                                                    //alert("Ai Wins!")
+                                                        if (window.confirm('AI Wins! \n Continue Playing?'))
+                                                        {
+                                                            location.reload();
+                                                        }
+                                                        else
+                                                        {
+                                                            window.location.href = '/';
+                                                        }
+                                                },
+                                                error: function(req, status, error) {
+                                                    console.log(status)
+
+                                                }
+                                            })
+                                        } else if (p2hand.length == 0) {
+                                            winnable.Wins = 1;
+                                            winnable.Loses = 0;
+                                            winnable.Username = ign;
+                                            winnable.Gameplayed = 1;
+                                            winnable.Password = 'test';
+                                            winnable.NumberOfMove = once;
+                                            winnable.Enemy = 'Ai';
+                                            win.play();
+                                            $.ajax({
+                                                type: "POST",
+                                                url: "@Url.Action("Record")",
+                                                data: winnable,
+                                                success: function(response) {
+                                                    console.log("sucess")
+                                                    //alert("Player Wins!")
+                                                       if (window.confirm('Player Wins! \n Continue Playing?'))
+                                                        {
+                                                            location.reload();
+                                                        }
+                                                        else
+                                                        {
+                                                            window.location.href = '/';
+                                                        }
+                                                        
+                                                },
+                                                error: function(req, status, error) {
+                                                    console.log(status)
+
+                                                }
+                                            })
+                                           
+                                           
+                                        }
+                                    }
+                                     if (x <= 0) {
+                                        x = p1hand.length;
+                                        shuffle.play();
+                                        $( "#dialog" ).dialog({
+                                            title: 'Player Shuffling',
+                                            modal: true,
+                                            width: 600,
+                                            height: 600,
+                                            open: function (event, ui) {
+                                                setTimeout(function () {
+                                                    $("#dialog").dialog("close");
+                                                }, 2000);
+                                            }
+                                        }).html('<img style="width: 500px; height: 500px;" src="/img/shuffle.gif"></img>');
+                                        //alert("Player Deck Shuffling")
+                                        console.log('test!',p1hand.sort(() => Math.random() - 0.5))
+                                        console.log("p1 shuffle" , x)
+                                        $('#playerbot').attr('src', '/img/'+p1hand[0].rank+"_of_"+p1hand[0].suit+"s.png")
+                                    }  if (y <= 0){                                 
+                                        y = p2hand.length;
+                                        shuffle.play();
+                                        $( "#dialog" ).dialog({
+                                            title: 'Ai Shuffling',
+                                            modal: true,               
+                                            width: 600,
+                                            height: 600,
+                                            open: function (event, ui) {
+                                                setTimeout(function () {
+                                                    $("#dialog").dialog("close");
+                                                }, 2000);
+                                            }
+                                        }).html('<img style="width: 500px; height: 500px;" src="/img/shuffle.gif"></img>');
+                                        console.log('test!',p2hand.sort(() => Math.random() - 0.5))
+                                        console.log("p2 shuffle", y)
+                                        //$('#aiHand').attr('src', '/img/'+p2hand[0].rank+"_of_"+p2hand[0].suit+"s.png")
+                                    }  
+                        try{ 
+                                $('#playerMove').attr('src', '/img/'+p1play.rank+"_of_"+p1play.suit+"s.png")
+                                x--;
+                                $('#playerbot').attr('src', '/img/'+p1hand[0].rank+"_of_"+p1hand[0].suit+"s.png")
+                                $('#aiMove').attr('src', '/img/'+p2play.rank+"_of_"+p2play.suit+"s.png")
+                                y--;
+                                //$('#aiHand').attr('src', '/img/'+p2hand[0].rank+"_of_"+p2hand[0].suit+"s.png")
+                                console.log(p1play , p2play)
+                                console.log(p1hand , p2hand)
+                                    if (p1play.value > p2play.value) {
+                                        p1hand.push(p1play);
+                                        p1hand.push(p2play);
+                                        if (pwar.length > 1) {
+                                            for (var i = 0; i < pwar.length; i++) {
+                                                p1hand.push(pwar[i]);
+                                            }
+                                            pwar = [];
+                                        }
+                                        //p2hand.splice(y - 1, 1);
+                                        //p2play--;
+                                        //y--;
+                                        $('#pwin').html("Win!")
+                                        $('#awin').html("Lose!")
+                                         $('#holder1').remove();
+                                         $('#holder2').remove();
+                                        console.log("Player Added" , y)
+                                        $('body').css('background-image', 'none');
+                                        pwar = [];
+                                    } else if (p1play.value < p2play.value) {
+                                        p2hand.push(p2play);
+                                        p2hand.push(p1play);
+                                        if (pwar.length > 1) { 
+                                            for(var i = 0; i < pwar.length; i++){
+                                                p2hand.push(pwar[i]);
+                                            }
+                                            pwar = [];
+                                        }
+                                        $('body').css('background-image', 'none');
+                                        //p1hand.splice(x - 1, 1);
+                                        //p1play--;
+                                        //x--;
+                                        $('#awin').html("Win!")
+                                        $('#pwin').html("Lose!")
+                                        console.log("Ai Added" , y)
+                                         $('#holder1').remove();
+                                         $('#holder2').remove();
+                                        
+                                    } else if(p1play.value = p2play.value){
+                                       
+                                        console.log("War time!" , p1play , p2play)
+                                        $('body').css('background-image', 'url(/img/war.png)');
+                                        war.play();
+                                            pwar.push(p1play);
+                                            p1play = {};
+                                            //p1hand.splice(x - 1, 1);
+                                            pwar.push(p2play);
+                                            p2play = {};
+                                            //p2hand.splice(y - 1, 1);
+                                        for(var i = 0; i < 3; i++){
+                                            pwar.push(p1hand[0]);
+                                            p1hand.splice(0, 1);
+                                            pwar.push(p2hand[0])
+                                            p2hand.splice(0, 1); 
+                                            x--;
+                                            y--;
+                                        }
+                                        $('#playerbot').attr('src', '/img/'+p1hand[0].rank+"_of_"+p1hand[0].suit+"s.png")
+                                        //$('#aiHand').attr('src', '/img/'+p2hand[0].rank+"_of_"+p2hand[0].suit+"s.png")
+                                        console.log(pwar)
+                                        $('#playerTable').prepend('<img id="holder1" src="/img/red_joker.png"/>')
+                                        $('#aiTable').prepend('<img id="holder2" src="/img/red_joker.png"/>')
+                                        $('#awin').html("War!")
+                                        $('#pwin').html("War!")
+                                    }
+                                    sp = p1hand.length;
+                                    sa = p2hand.length;
+                                    $('#playerScore').html(sp)
+                                    $('#aiScore').html(sa)
+                            }catch (err) {
+                                console.log(err)
+                            }
+
+                },
+                error: function(req, status, error){
+                    console.log(error)
+                }
+            }) })
+            
+        })
+    </script>
+    }
+    
+
+</div>

@@ -1,0 +1,89 @@
+﻿@using Microsoft.AspNetCore.Identity
+@using War.Areas.Identity.Data
+@*@model IEnumerable<Player>*@
+@inject SignInManager<WarUser> SignInManager
+@inject UserManager<WarUser> UserManager
+
+@{
+    ViewData["Title"] = "Dashboard";
+}
+<script src="~/js/site.js" asp-append-version="true"></script>
+<div class="container-fluid pt-5 text-center">
+    @if (SignInManager.IsSignedIn(User))
+    {
+
+    
+        <div>
+            <h3 class="text-primary display-m text-capitalize">Your Overall Score</h3>
+            <canvas id="myChart" style="max-width:200px; max-height:200px"></canvas>
+               @section Scripts{
+               <script>
+                var name = '@UserManager.GetUserAsync(User).Result.IGN'
+                    $(document).ready(function() {
+                         const clicksound = new Audio();
+                         clicksound.src ="/sounds/click.mp3"
+                        $.ajax({
+                            type: "POST",
+                            url: "@Url.Action("Graph")",
+                            data: {player: name},
+                            success: function(data) {
+                                console.log(data)
+                                    var barColor= ['#555555','#333333']
+                                    const labels = [
+                                                    'Wins',
+                                                    'Loses'
+                                                  ];
+                                    new Chart("myChart",
+                                    {
+                                        type: 'doughnut',
+                                        data:{
+                                            labels: labels,
+                                            datasets: [{
+                                                backgroundColor: barColor,
+                                                data: [data[0], data[1]]
+                                            }]
+                                        }
+                                        }
+                                        )
+                            },
+                            error: function(req, status, error) {
+                         console.log(status)
+                        }
+                      })
+                    });
+                </script>
+                }
+        </div>
+    }
+    else
+    {
+        <br> <br> <br> <br>
+    }
+    <div class="text-primary display-1 p-4 text-center"> 
+        <h1 class="text-center display-1 p-2 ">War Game - Card</h1>
+        <p class="text-center">By Sean</p>
+    </div>
+    <div class="text-xxl-center">
+        @if (SignInManager.IsSignedIn(User))
+        {
+            <a class="btn btn-primary p-4" onclick="clicksound.play();" asp-area="" asp-controller="Player" asp-action="Game"><h4>Play</h4></a>
+        }
+        else
+        {
+            <a class="btn btn-primary p-4" id="login" onclick="clicksound.play();" asp-area="Identity" asp-page="/Account/Login"><h4>Play</h4></a>
+        }
+
+        <a class="btn btn-secondary p-4" asp-area="" onclick="clicksound.play();" asp-controller="Game" asp-action="GameGrid"><h5>Stats</h5></a>
+    </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+@* <script>
+    const config = {
+      type: 'doughnut',
+      data: data,
+    };
+  const myChart = new Chart(
+    document.getElementById('myChart'),
+    config
+  );
+</script>*@
